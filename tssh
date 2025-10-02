@@ -1,0 +1,29 @@
+#!/bin/zsh
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 arguments"
+  exit 1
+fi
+
+if [ -z "$TMUX" ]; then
+  echo "$0 must be run from tmux session"
+  exit 1
+fi
+
+# Get current tmux prefix key
+previous_prefix=$(tmux show-option -g prefix | awk '{print $2}')
+# Change prefix to Ctrl+a (C-a)
+tmux set-option prefix C-a
+tmux unbind-key "$previous_prefix"
+tmux bind-key C-a send-prefix
+#
+# Run SSH session (replace user@host with actual login)
+ssh "$@"
+
+# After SSH session ends, restore previous prefix
+tmux set-option prefix "$previous_prefix"
+tmux unbind-key C-a
+tmux bind-key "$previous_prefix" send-prefix
+
+exit 0
+
