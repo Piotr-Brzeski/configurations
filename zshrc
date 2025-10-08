@@ -5,9 +5,7 @@ setopt prompt_subst
 # Fix delete key
 bindkey -M vicmd '^[[3~' delete-char
 bindkey -M viins '^[[3~' delete-char
-# Define colors for the modes
-#vim_ins_mode="%K{cyan}%F{black}[INSERT]%k%f"
-#vim_cmd_mode="%K{green}%F{black}[NORMAL]%k%f"
+# Define prompt colors for the modes
 vim_ins_mode="%1~ %# "
 vim_cmd_mode="%F{green}%1~ %# %f"
 # Initial value
@@ -36,10 +34,8 @@ function TRAPINT() {
   return $((128 + $1))
 }
 bindkey -v
-# Set the right prompt to show vim mode
+# Set the prompt
 PROMPT='${vim_mode}'
-
-#PROMPT='%1~ %# '
 
 # Configure history behavior for better sharing and cleanliness
 #setopt inc_append_history   # Append commands immediately to the history file
