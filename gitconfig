@@ -1,0 +1,11 @@
+[user]
+[core]
+  excludesfile = ~/.gitignore
+[init]
+  defaultBranch = master
+[pull]
+  ff = only
+[alias]
+  l = log --oneline
+  graph = log --oneline --all --graph
+
