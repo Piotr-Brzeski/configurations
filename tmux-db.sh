@@ -4,6 +4,11 @@ DB_FILE="/tmp/$UID-tmux-status.db"
 CURRENT_PATH="$1"
 COMMAND=$2
 
+if [[ -z $CURRENT_PATH ]]; then
+    echo "Path not specified" >&2
+    exit 1
+fi
+
 read_from_db() {
     local FIELD=$1
     local TIMEOUT=$2

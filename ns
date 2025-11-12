@@ -1,0 +1,14 @@
+#!/bin/zsh
+
+if [ -z "$1" ]; then
+   netns -l || exit 1
+   exit 0
+fi
+
+echo "Entering namespace $1"
+tmux-db.sh "$(tmux display-message -p '#{pane_id}')" --push-ns "$1" || exit 1
+netns "$1"
+echo "Leaving namespace $1"
+tmux-db.sh "$(tmux display-message -p '#{pane_id}')" --pop-ns || exit 1
+
+exit 0
