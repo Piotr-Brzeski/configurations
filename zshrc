@@ -63,3 +63,7 @@ fzf-file-widget() {
 }
 bindkey '^F' fzf-file-widget
 zle -N fzf-file-widget
+
+# Load local file if exists
+[ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+
