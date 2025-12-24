@@ -26,7 +26,21 @@ write_to_db() {
 }
 
 create_host() {
+    local MAX_LEN=30
     local HOST="${USER}@$(hostname)"
+    if (( ${#HOST} > MAX_LEN )); then
+        HOST="$(hostname)"
+        if (( ${#HOST} > MAX_LEN )); then
+            local dot_count=$(echo -n "$HOST" | grep -o '\.' | wc -l)
+            local section_count=$((dot_count + 1))
+            while (( ${#HOST} > MAX_LEN && section_count > 1 )); do
+                HOST="${HOST%.*}"
+                dot_count=$(echo -n "$HOST" | grep -o '\.' | wc -l)
+                section_count=$((dot_count + 1))
+            done
+        fi
+    fi
+    HOST="${HOST:0:$((MAX_LEN))}"
     write_to_db "host" "$HOST"
     echo $HOST
 }

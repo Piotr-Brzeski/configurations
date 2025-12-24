@@ -35,5 +35,7 @@
   "editor": {
     "tab_size": 2,
     "insert_spaces": true
-  }
+  },
+  "format_on_save": "off",
+  "auto_indent": false
 }
