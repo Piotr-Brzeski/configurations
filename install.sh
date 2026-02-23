@@ -71,27 +71,123 @@ echo ""
 echo "${GREEN}All required dependencies are installed!${NC}"
 echo ""
 
+# Check if a symlink can be created safely
+check_symlink() {
+    local src="$1"
+    local dst="$2"
+
+    if [ -e "$dst" ] || [ -L "$dst" ]; then
+        # Target exists - check if it's already our symlink
+        if [ -L "$dst" ]; then
+            local current_target="$(readlink "$dst")"
+            if [ "$current_target" = "$src" ]; then
+                echo "${YELLOW}⚠${NC}  $dst already points to $src (will skip)"
+                return 0
+            else
+                echo "${RED}✗${NC} $dst exists and points to $current_target (not $src)"
+                return 1
+            fi
+        else
+            echo "${RED}✗${NC} $dst exists and is not a symlink"
+            return 1
+        fi
+    else
+        echo "${GREEN}✓${NC} $dst can be created"
+        return 0
+    fi
+}
+
+# Pre-flight checks for all symlinks
+echo "Checking if symlinks can be created..."
+SYMLINK_ERRORS=0
+
+# Check root-only tools
+if [ "$(id -u)" -eq 0 ]; then
+    check_symlink "$SRC_DIR/t" "/usr/local/bin/t" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+    check_symlink "$SRC_DIR/tssh" "/usr/local/bin/tssh" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+    check_symlink "$SRC_DIR/tmux-db.sh" "/usr/local/bin/tmux-db.sh" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+fi
+
+# Check home directory configs
+check_symlink "$SRC_DIR/zshrc" "$HOME/.zshrc" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/gitconfig" "$HOME/.gitconfig" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/gitignore" "$HOME/.gitignore" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/tmux.conf" "$HOME/.tmux.conf" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/zed-keymap.json" "$HOME/.config/zed/keymap.json" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/zed-settings.json" "$HOME/.config/zed/settings.json" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/nvim-init.lua" "$HOME/.config/nvim/init.lua" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+
+# Check if lazy.nvim already exists
+if [ -e "$HOME/.local/share/nvim/site/pack/lazy/start/lazy.nvim" ]; then
+    echo "${YELLOW}⚠${NC}  $HOME/.local/share/nvim/site/pack/lazy/start/lazy.nvim already exists (will skip clone)"
+fi
+
+# Exit if any symlink would fail
+if [ $SYMLINK_ERRORS -gt 0 ]; then
+    echo ""
+    echo "${RED}ERROR: $SYMLINK_ERRORS symlink(s) would fail.${NC}"
+    echo ""
+    echo "Please backup or remove conflicting files, then run this script again."
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "${GREEN}All symlinks can be created safely!${NC}"
+echo ""
+
+# Helper to create symlink (skip if already correct)
+create_symlink() {
+    local src="$1"
+    local dst="$2"
+
+    if [ -L "$dst" ]; then
+        local current_target="$(readlink "$dst")"
+        if [ "$current_target" = "$src" ]; then
+            echo "  Skipping $dst (already correct)"
+            return 0
+        fi
+    fi
+
+    ln -s "$src" "$dst" || exit 1
+    echo "  Created $dst"
+}
+
+# Create symlinks
+echo "Creating symlinks..."
+
 if [ "$(id -u)" -ne 0 ]; then
         echo "Skipping tools install - not run as root."
 else
-        ln -s "$SRC_DIR/t" /usr/local/bin/t || exit 1
-        ln -s "$SRC_DIR/tssh" /usr/local/bin/tssh || exit 1
-        ln -s "$SRC_DIR/tmux-db.sh" /usr/local/bin/tmux-db.sh || exit 1
+        create_symlink "$SRC_DIR/t" "/usr/local/bin/t"
+        create_symlink "$SRC_DIR/tssh" "/usr/local/bin/tssh"
+        create_symlink "$SRC_DIR/tmux-db.sh" "/usr/local/bin/tmux-db.sh"
 fi
 
-#ln -s "$SRC_DIR/zprofile" ~/.zprofile || exit 1
-ln -s "$SRC_DIR/zshrc" ~/.zshrc || exit 1
-ln -s "$SRC_DIR/gitconfig" ~/.gitconfig || exit 1
-ln -s "$SRC_DIR/gitignore" ~/.gitignore || exit 1
-ln -s "$SRC_DIR/tmux.conf" ~/.tmux.conf || exit 1
+#create_symlink "$SRC_DIR/zprofile" "$HOME/.zprofile"
+create_symlink "$SRC_DIR/zshrc" "$HOME/.zshrc"
+create_symlink "$SRC_DIR/gitconfig" "$HOME/.gitconfig"
+create_symlink "$SRC_DIR/gitignore" "$HOME/.gitignore"
+create_symlink "$SRC_DIR/tmux.conf" "$HOME/.tmux.conf"
 
-mkdir -p ~/.config/zed
-ln -s "$SRC_DIR/zed-keymap.json" ~/.config/zed/keymap.json || exit 1
-ln -s "$SRC_DIR/zed-settings.json" ~/.config/zed/settings.json || exit 1
+mkdir -p "$HOME/.config/zed"
+create_symlink "$SRC_DIR/zed-keymap.json" "$HOME/.config/zed/keymap.json"
+create_symlink "$SRC_DIR/zed-settings.json" "$HOME/.config/zed/settings.json"
 
-mkdir -p ~/.config/nvim
-mkdir -p ~/.local/share/nvim/site/pack/lazy/start
-git clone --filter=blob:none https://github.com/folke/lazy.nvim.git --branch=stable ~/.local/share/nvim/site/pack/lazy/start/lazy.nvim
-ln -s "$SRC_DIR/nvim-init.lua" ~/.config/nvim/init.lua || exit 1
+mkdir -p "$HOME/.config/nvim"
+mkdir -p "$HOME/.local/share/nvim/site/pack/lazy/start"
+
+# Clone lazy.nvim if it doesn't exist
+if [ ! -e "$HOME/.local/share/nvim/site/pack/lazy/start/lazy.nvim" ]; then
+    echo "  Cloning lazy.nvim..."
+    git clone --filter=blob:none https://github.com/folke/lazy.nvim.git --branch=stable "$HOME/.local/share/nvim/site/pack/lazy/start/lazy.nvim" || exit 1
+else
+    echo "  Skipping lazy.nvim clone (already exists)"
+fi
+
+create_symlink "$SRC_DIR/nvim-init.lua" "$HOME/.config/nvim/init.lua"
+
+echo ""
+echo "${GREEN}Installation completed successfully!${NC}"
 
 exit 0
