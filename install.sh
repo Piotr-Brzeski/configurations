@@ -2,6 +2,31 @@
 
 SRC_DIR="$(cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P)"
 
+# Parse arguments
+FORCE_INSTALL=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -f|--force)
+            FORCE_INSTALL=1
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [OPTIONS]"
+            echo ""
+            echo "Options:"
+            echo "  -f, --force    Override existing files and symlinks"
+            echo "  -h, --help     Show this help message"
+            echo ""
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Run '$0 --help' for usage information."
+            exit 1
+            ;;
+    esac
+done
+
 # Check if current shell is zsh
 if [ -z "$ZSH_VERSION" ]; then
     echo "ERROR: This script must be run in zsh, not $SHELL"
@@ -84,12 +109,22 @@ check_symlink() {
                 echo "${YELLOW}⚠${NC}  $dst already points to $src (will skip)"
                 return 0
             else
-                echo "${RED}✗${NC} $dst exists and points to $current_target (not $src)"
-                return 1
+                if [ $FORCE_INSTALL -eq 1 ]; then
+                    echo "${YELLOW}⚠${NC}  $dst exists and points to $current_target (will override)"
+                    return 0
+                else
+                    echo "${RED}✗${NC} $dst exists and points to $current_target (not $src)"
+                    return 1
+                fi
             fi
         else
-            echo "${RED}✗${NC} $dst exists and is not a symlink"
-            return 1
+            if [ $FORCE_INSTALL -eq 1 ]; then
+                echo "${YELLOW}⚠${NC}  $dst exists and is not a symlink (will override)"
+                return 0
+            else
+                echo "${RED}✗${NC} $dst exists and is not a symlink"
+                return 1
+            fi
         fi
     else
         echo "${GREEN}✓${NC} $dst can be created"
@@ -128,6 +163,8 @@ if [ $SYMLINK_ERRORS -gt 0 ]; then
     echo "${RED}ERROR: $SYMLINK_ERRORS symlink(s) would fail.${NC}"
     echo ""
     echo "Please backup or remove conflicting files, then run this script again."
+    echo "Or use --force to override existing files:"
+    echo "  $0 --force"
     echo ""
     exit 1
 fi
@@ -147,6 +184,12 @@ create_symlink() {
             echo "  Skipping $dst (already correct)"
             return 0
         fi
+    fi
+
+    # Remove existing file/symlink if force mode is enabled
+    if [ $FORCE_INSTALL -eq 1 ] && { [ -e "$dst" ] || [ -L "$dst" ]; }; then
+        echo "  Removing existing $dst"
+        rm -rf "$dst" || exit 1
     fi
 
     ln -s "$src" "$dst" || exit 1
