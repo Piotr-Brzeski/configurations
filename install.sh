@@ -28,15 +28,8 @@ while [ $# -gt 0 ]; do
 done
 
 # Check if current shell is zsh
-if [ -z "$ZSH_VERSION" ]; then
+if [ "$SHELL" != "/bin/zsh" ]; then
     echo "ERROR: This script must be run in zsh, not $SHELL"
-    echo ""
-    echo "Please run:"
-    echo "  zsh $0"
-    echo ""
-    echo "Or change your default shell to zsh:"
-    echo "  chsh -s \$(which zsh)"
-    echo ""
     exit 1
 fi
 
@@ -78,23 +71,11 @@ check_command "nvim" || MISSING_DEPS=$((MISSING_DEPS + 1))
 
 # Exit if critical dependencies are missing
 if [ $MISSING_DEPS -gt 0 ]; then
-    echo ""
     echo "${RED}ERROR: $MISSING_DEPS required tool(s) missing.${NC}"
-    echo ""
-    echo "Installation commands for macOS (using Homebrew):"
-    echo "  brew install git zsh tmux fzf sqlite neovim"
-    echo ""
-    echo "For other systems, use your package manager:"
-    echo "  Ubuntu/Debian: sudo apt install git zsh tmux fzf sqlite3 neovim"
-    echo "  Fedora/RHEL:   sudo dnf install git zsh tmux fzf sqlite neovim"
-    echo "  Arch:          sudo pacman -S git zsh tmux fzf sqlite neovim"
-    echo ""
     exit 1
 fi
 
-echo ""
 echo "${GREEN}All required dependencies are installed!${NC}"
-echo ""
 
 # Check if a symlink can be created safely
 check_symlink() {
@@ -138,6 +119,7 @@ SYMLINK_ERRORS=0
 
 # Check root-only tools
 if [ "$(id -u)" -eq 0 ]; then
+    mkdir -p "/usr/local/bin"
     check_symlink "$SRC_DIR/t" "/usr/local/bin/t" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
     check_symlink "$SRC_DIR/tssh" "/usr/local/bin/tssh" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
     check_symlink "$SRC_DIR/tmux-db.sh" "/usr/local/bin/tmux-db.sh" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
@@ -145,6 +127,7 @@ fi
 
 # Check home directory configs
 check_symlink "$SRC_DIR/zshrc" "$HOME/.zshrc" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/zprofile.tmux" "$HOME/.zprofile.tmux" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 check_symlink "$SRC_DIR/gitconfig" "$HOME/.gitconfig" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 check_symlink "$SRC_DIR/gitignore" "$HOME/.gitignore" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 check_symlink "$SRC_DIR/tmux.conf" "$HOME/.tmux.conf" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
@@ -207,8 +190,8 @@ else
         create_symlink "$SRC_DIR/tmux-db.sh" "/usr/local/bin/tmux-db.sh"
 fi
 
-#create_symlink "$SRC_DIR/zprofile" "$HOME/.zprofile"
 create_symlink "$SRC_DIR/zshrc" "$HOME/.zshrc"
+create_symlink "$SRC_DIR/zprofile.tmux" "$HOME/.zprofile.tmux"
 create_symlink "$SRC_DIR/gitconfig" "$HOME/.gitconfig"
 create_symlink "$SRC_DIR/gitignore" "$HOME/.gitignore"
 create_symlink "$SRC_DIR/tmux.conf" "$HOME/.tmux.conf"
