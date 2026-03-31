@@ -37,5 +37,5 @@
     "insert_spaces": true
   },
   "format_on_save": "off",
-  "auto_indent": false
+  "auto_indent": "none"
 }
