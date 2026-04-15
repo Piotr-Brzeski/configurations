@@ -134,6 +134,8 @@ check_symlink "$SRC_DIR/tmux.conf" "$HOME/.tmux.conf" || SYMLINK_ERRORS=$((SYMLI
 check_symlink "$SRC_DIR/zed-keymap.json" "$HOME/.config/zed/keymap.json" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 check_symlink "$SRC_DIR/zed-settings.json" "$HOME/.config/zed/settings.json" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 check_symlink "$SRC_DIR/nvim-init.lua" "$HOME/.config/nvim/init.lua" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/CLAUDE.md" "$HOME/.claude/CLAUDE.md" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
+check_symlink "$SRC_DIR/CLAUDE.md" "$HOME/Library/Developer/Xcode/CodingAssistant/ClaudeAgentConfig/CLAUDE.md" || SYMLINK_ERRORS=$((SYMLINK_ERRORS + 1))
 
 # Check if lazy.nvim already exists
 if [ -e "$HOME/.local/share/nvim/site/pack/lazy/start/lazy.nvim" ]; then
@@ -212,6 +214,12 @@ else
 fi
 
 create_symlink "$SRC_DIR/nvim-init.lua" "$HOME/.config/nvim/init.lua"
+
+mkdir -p "$HOME/.claude"
+create_symlink "$SRC_DIR/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+
+mkdir -p "$HOME/Library/Developer/Xcode/CodingAssistant/ClaudeAgentConfig"
+create_symlink "$SRC_DIR/CLAUDE.md" "$HOME/Library/Developer/Xcode/CodingAssistant/ClaudeAgentConfig/CLAUDE.md"
 
 echo ""
 echo "${GREEN}Installation completed successfully!${NC}"
