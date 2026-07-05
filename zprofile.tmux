@@ -1,5 +1,5 @@
 # Auto attach or create tmux session 'init' at login
-if command -v tmux >/dev/null 2>&1; then
+if command -v tmux >/dev/null 2>&1 && [[ -t 0 ]] && [[ -t 1 ]]; then
   # Prevent nesting tmux in a tmux session
   if [ -z "$TMUX" ]; then
     SESSION="init"
