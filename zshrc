@@ -1,3 +1,9 @@
+# Enable history
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt INC_APPEND_HISTORY SHARE_HISTORY HIST_IGNORE_DUPS
+
 # Enable prompt string variable expansion
 setopt prompt_subst
 

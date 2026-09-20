@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env zsh
 
 SRC_DIR="$(cd -P -- "$(dirname -- "$(command -v -- "$0")")" && pwd -P)"
 
@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Check if current shell is zsh
-if [ "$SHELL" != "/bin/zsh" ]; then
+if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/bin/zsh" ]; then
     echo "ERROR: This script must be run in zsh, not $SHELL"
     exit 1
 fi
