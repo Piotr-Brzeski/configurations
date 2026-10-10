@@ -28,7 +28,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Check if current shell is zsh
-if [ "$SHELL" != "/bin/zsh" ] && [ "$SHELL" != "/usr/bin/zsh" ]; then
+if [ -z "$ZSH_VERSION" ]; then
     echo "ERROR: This script must be run in zsh, not $SHELL"
     exit 1
 fi
